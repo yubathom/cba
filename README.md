@@ -26,7 +26,7 @@ This project takes baseball statistics stored in Excel files (organized by team 
 1. Clone this repository
 2. Create a virtual environment (optional but recommended):
    ```
-   python -m venv venv
+   python3 -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 3. Install required packages:
@@ -57,10 +57,11 @@ Each Excel file should contain sheets named "Batting", "Pitching", and "Fielding
 Run the processing script:
 
 ```
-python process.py
+python3 process.py
 ```
 
 This will:
+
 1. Process all Excel files in the input directory
 2. Create a timestamped output directory
 3. Generate three CSV files (Batting.csv, Pitching.csv, Fielding.csv)
@@ -70,10 +71,11 @@ This will:
 Validate the processed data:
 
 ```
-python validate.py
+python3 validate.py
 ```
 
 This will:
+
 1. Locate the most recent output directory
 2. Validate the data against the source files
 3. Report any inconsistencies or missing data
@@ -81,11 +83,13 @@ This will:
 ## Code Formatting and Linting
 
 Format code:
+
 ```
 black .
 ```
 
 Lint code:
+
 ```
 flake8
 ```
