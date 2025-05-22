@@ -2,6 +2,20 @@
 
 A Python-based tool for processing baseball team statistics from Excel files to consolidated CSV output.
 
+## GitHub Pages Deployment
+
+This project uses GitHub Actions to process the latest Excel files and publish the resulting CSVs and web app to GitHub Pages. The output CSV files (`Batting.csv`, `Pitching.csv`, `Fielding.csv`) are **not committed to the repository**; they are generated during the GitHub Actions workflow and published directly to GitHub Pages.
+
+To deploy:
+
+1. Push your changes to the repository.
+2. Go to the Actions tab on GitHub and manually trigger the `pages-deploy` workflow ("Run workflow").
+3. The workflow will:
+   - Run the Python processing script to generate the latest CSVs in `output/`.
+   - Publish `index.html`, `main.js`, and the three main CSVs (`Batting.csv`, `Pitching.csv`, `Fielding.csv`) to GitHub Pages.
+
+The site will be available at the repository's GitHub Pages URL after the workflow completes.
+
 ## Overview
 
 This project takes baseball statistics stored in Excel files (organized by team and round) and processes them into consolidated CSV files for batting, pitching, and fielding statistics.
