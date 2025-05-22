@@ -4,11 +4,7 @@
 
 $(document).ready(function () {
   // List of CSV files in the latest folder (should be fetched from server in real app)
-  const csvFiles = [
-    "output/Batting.csv",
-    "output/Pitching.csv",
-    "output/Fielding.csv",
-  ];
+  const csvFiles = ["Batting.csv", "Pitching.csv", "Fielding.csv"];
 
   // Render buttons for each CSV file
   const $buttons = $("#csv-buttons");
