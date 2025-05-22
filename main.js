@@ -4,7 +4,11 @@
 
 $(document).ready(function () {
   // List of CSV files in the latest folder (should be fetched from server in real app)
-  const csvFiles = ["Batting.csv", "Pitching.csv", "Fielding.csv"];
+  const csvFiles = [
+    "output/Batting.csv",
+    "output/Pitching.csv",
+    "output/Fielding.csv",
+  ];
 
   // Render buttons for each CSV file
   const $buttons = $("#csv-buttons");
@@ -89,6 +93,7 @@ $(document).ready(function () {
               lengthMenu: [[-1], ["All"]],
               scrollX: true,
               dom: "ftip",
+              fixedHeader: true,
             });
             // Filtering logic
             if (columns.includes("Round")) {
@@ -117,6 +122,36 @@ $(document).ready(function () {
                   .draw();
               });
             }
+            // Sticky header on scroll
+            $(window)
+              .off("scroll.stickyHeader")
+              .on("scroll.stickyHeader", function () {
+                var $table = $("#csv-table");
+                if ($table.length === 0) return;
+                var $thead = $table.find("thead");
+                var offset = $table.offset().top;
+                var scrollTop = $(window).scrollTop();
+
+                if (scrollTop > offset) {
+                  if (!$thead.hasClass("sticky-header")) {
+                    $thead.addClass("sticky-header");
+                    // Add a placeholder row to prevent layout shift
+                    if (
+                      $thead.find(".sticky-header-placeholder").length === 0
+                    ) {
+                      var $placeholder = $thead
+                        .find("tr")
+                        .first()
+                        .clone()
+                        .addClass("sticky-header-placeholder");
+                      $thead.append($placeholder);
+                    }
+                  }
+                } else {
+                  $thead.removeClass("sticky-header");
+                  $thead.find(".sticky-header-placeholder").remove();
+                }
+              });
           },
           error: function () {
             $("#table-container").html(
