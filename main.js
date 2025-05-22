@@ -30,7 +30,7 @@ $(document).ready(function () {
   });
 
   function renderCsvTable(file) {
-    const fileUrl = `output/${file}`;
+    const fileUrl = `${file}`;
     $("#table-container").html('<div class="text-muted">Loading...</div>');
     $.ajax({
       url: fileUrl,
