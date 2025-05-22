@@ -85,6 +85,9 @@ def process_excel_files():
     # Define expected column names for each table (excluding Team and Round which are added later)
     batting_columns = ["#", "Name", "G", "PA", "AB", "R", "H", "HR", "TB", "RBI", 
                        "AVG", "BB", "SO", "HBP", "SB", "CS", "SCB", "SF", "SLG", "BA/RSP"]
+    # Add OBP and OPS after SLG and before BA/RSP
+    batting_columns.insert(batting_columns.index("SLG") + 1, "OBP")
+    batting_columns.insert(batting_columns.index("OBP") + 1, "OPS")
     
     pitching_columns = ["#", "Name", "G", "W", "L", "SV", "HLD", "IP", "BF", "Ball", 
                         "Str", "R", "ER", "ERA", "K", "H", "BB", "IBB", "BK", "WP", "HR"]
@@ -143,6 +146,29 @@ def process_excel_files():
                     available_columns = [col for col in batting_columns if col in df.columns]
                     df = df[available_columns]
                     
+                    # Calculate OBP and OPS
+                    def safe_div(n, d):
+                        try:
+                            return n / d if d != 0 else np.nan
+                        except Exception:
+                            return np.nan
+
+                    # OBP = (H + BB + HBP) / (AB + BB + HBP + SF)
+                    h = pd.to_numeric(df.get("H", 0), errors='coerce').fillna(0)
+                    bb = pd.to_numeric(df.get("BB", 0), errors='coerce').fillna(0)
+                    hbp = pd.to_numeric(df.get("HBP", 0), errors='coerce').fillna(0)
+                    ab = pd.to_numeric(df.get("AB", 0), errors='coerce').fillna(0)
+                    sf = pd.to_numeric(df.get("SF", 0), errors='coerce').fillna(0)
+                    slg = pd.to_numeric(df.get("SLG", 0), errors='coerce').fillna(0)
+                    obp_denom = ab + bb + hbp + sf
+                    obp = (h + bb + hbp) / obp_denom.replace(0, np.nan)
+                    df["OBP"] = obp.round(3)
+                    df["OPS"] = (df["OBP"] + slg).round(3)
+
+                    # Ensure columns are in the correct order
+                    available_columns = [col for col in batting_columns if col in df.columns]
+                    df = df[available_columns]
+                    
                     # Concatenate to the main DataFrame
                     batting_df = pd.concat([batting_df, df], ignore_index=True)
             
@@ -197,6 +223,29 @@ def process_excel_files():
     
     # Save each table to a separate CSV file
     if not batting_df.empty:
+        # Calculate OBP and OPS
+        def safe_div(n, d):
+            try:
+                return n / d if d != 0 else np.nan
+            except Exception:
+                return np.nan
+
+        # OBP = (H + BB + HBP) / (AB + BB + HBP + SF)
+        h = pd.to_numeric(batting_df.get("H", 0), errors='coerce').fillna(0)
+        bb = pd.to_numeric(batting_df.get("BB", 0), errors='coerce').fillna(0)
+        hbp = pd.to_numeric(batting_df.get("HBP", 0), errors='coerce').fillna(0)
+        ab = pd.to_numeric(batting_df.get("AB", 0), errors='coerce').fillna(0)
+        sf = pd.to_numeric(batting_df.get("SF", 0), errors='coerce').fillna(0)
+        slg = pd.to_numeric(batting_df.get("SLG", 0), errors='coerce').fillna(0)
+        obp_denom = ab + bb + hbp + sf
+        obp = (h + bb + hbp) / obp_denom.replace(0, np.nan)
+        batting_df["OBP"] = obp.round(3)
+        batting_df["OPS"] = (batting_df["OBP"] + slg).round(3)
+
+        # Ensure columns are in the correct order
+        available_columns = [col for col in batting_columns if col in batting_df.columns]
+        batting_df = batting_df[available_columns]
+
         # Save the clean data
         batting_df.to_csv(os.path.join(output_dir, 'Batting.csv'), index=False)
         print(f"Saved Batting.csv with {len(batting_df)} records")

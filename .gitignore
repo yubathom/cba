@@ -1,3 +1,6 @@
 raw_2025-04-14
 prompt.txt
 output/*
+
+!output/index.html
+!main.js
