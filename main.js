@@ -3,11 +3,6 @@
 // When a button is clicked, it fetches and renders the CSV as a table using PapaParse and DataTables.
 
 $(document).ready(function () {
-  // Hardcoded for demo: in a real app, this would be fetched from the server
-  // List of output folders (should be sorted by timestamp descending)
-  const outputFolders = ["2025-05-22_00h17", "2025-05-22_00h10"];
-  // Pick the latest
-  const latestFolder = outputFolders[0];
   // List of CSV files in the latest folder (should be fetched from server in real app)
   const csvFiles = ["Batting.csv", "Pitching.csv", "Fielding.csv"];
 
@@ -35,7 +30,7 @@ $(document).ready(function () {
   });
 
   function renderCsvTable(file) {
-    const fileUrl = `output/${latestFolder}/${file}`;
+    const fileUrl = `output/${file}`;
     $("#table-container").html('<div class="text-muted">Loading...</div>');
     $.ajax({
       url: fileUrl,
@@ -47,8 +42,37 @@ $(document).ready(function () {
           complete: function (results) {
             const data = results.data;
             const columns = results.meta.fields;
+            // Build filter dropdowns if columns exist
+            let filterHtml = "";
+            if (columns.includes("Round") || columns.includes("Team")) {
+              filterHtml += '<div class="row mb-3">';
+              if (columns.includes("Round")) {
+                const rounds = Array.from(
+                  new Set(data.map((row) => row["Round"]).filter(Boolean))
+                ).sort();
+                filterHtml +=
+                  '<div class="col-auto"><label class="me-2">Round:</label><select id="filter-round" class="form-select form-select-sm"><option value="">All</option>';
+                rounds.forEach((round) => {
+                  filterHtml += `<option value="${round}">${round}</option>`;
+                });
+                filterHtml += "</select></div>";
+              }
+              if (columns.includes("Team")) {
+                const teams = Array.from(
+                  new Set(data.map((row) => row["Team"]).filter(Boolean))
+                ).sort();
+                filterHtml +=
+                  '<div class="col-auto"><label class="me-2">Team:</label><select id="filter-team" class="form-select form-select-sm"><option value="">All</option>';
+                teams.forEach((team) => {
+                  filterHtml += `<option value="${team}">${team}</option>`;
+                });
+                filterHtml += "</select></div>";
+              }
+              filterHtml += "</div>";
+            }
             // Build HTML table
             let html =
+              filterHtml +
               '<table id="csv-table" class="display table table-striped table-bordered" style="width:100%"><thead><tr>';
             columns.forEach((col) => (html += `<th>${col}</th>`));
             html += "</tr></thead><tbody>";
@@ -60,11 +84,39 @@ $(document).ready(function () {
             html += "</tbody></table>";
             $("#table-container").html(html);
             // Activate DataTables
-            $("#csv-table").DataTable({
+            const table = $("#csv-table").DataTable({
               pageLength: -1,
               lengthMenu: [[-1], ["All"]],
               scrollX: true,
+              dom: "ftip",
             });
+            // Filtering logic
+            if (columns.includes("Round")) {
+              $("#filter-round").on("change", function () {
+                const val = $(this).val();
+                table
+                  .column(columns.indexOf("Round"))
+                  .search(
+                    val ? "^" + $.escapeSelector(val) + "$" : "",
+                    true,
+                    false
+                  )
+                  .draw();
+              });
+            }
+            if (columns.includes("Team")) {
+              $("#filter-team").on("change", function () {
+                const val = $(this).val();
+                table
+                  .column(columns.indexOf("Team"))
+                  .search(
+                    val ? "^" + $.escapeSelector(val) + "$" : "",
+                    true,
+                    false
+                  )
+                  .draw();
+              });
+            }
           },
           error: function () {
             $("#table-container").html(

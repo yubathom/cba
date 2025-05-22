@@ -77,7 +77,7 @@ def process_excel_files():
     """Process all Excel files in input directory and subdirectories."""
     # Create timestamp for output directory
     timestamp = datetime.now().strftime("%Y-%m-%d_%Hh%M")
-    output_dir = os.path.join("output", timestamp)
+    output_dir = os.path.join("output")
     
     # Create output directory
     os.makedirs(output_dir, exist_ok=True)
@@ -136,24 +136,14 @@ def process_excel_files():
                     for i, col in enumerate(df.columns):
                         if i < len(batting_columns) - 2:  # -2 for Team and Round
                             column_mapping[col] = batting_columns[i]
-                    
                     # Rename columns
                     for old_col, new_col in column_mapping.items():
                         if old_col in df.columns:
                             df = df.rename(columns={old_col: new_col})
-                    
-                    # Ensure only expected columns are included
-                    available_columns = [col for col in batting_columns if col in df.columns]
-                    df = df[available_columns]
-                    
-                    # Calculate OBP and OPS
-                    def safe_div(n, d):
-                        try:
-                            return n / d if d != 0 else np.nan
-                        except Exception:
-                            return np.nan
-
-                    # OBP = (H + BB + HBP) / (AB + BB + HBP + SF)
+                    # Add Team and Round columns before any reordering
+                    df['Team'] = team_name
+                    df['Round'] = round_name
+                    # Calculate OBP and OPS before reordering
                     h = pd.to_numeric(df.get("H", 0), errors='coerce').fillna(0)
                     bb = pd.to_numeric(df.get("BB", 0), errors='coerce').fillna(0)
                     hbp = pd.to_numeric(df.get("HBP", 0), errors='coerce').fillna(0)
@@ -164,11 +154,9 @@ def process_excel_files():
                     obp = (h + bb + hbp) / obp_denom.replace(0, np.nan)
                     df["OBP"] = obp.round(3)
                     df["OPS"] = (df["OBP"] + slg).round(3)
-
-                    # Ensure columns are in the correct order
-                    available_columns = [col for col in batting_columns if col in df.columns]
-                    df = df[available_columns]
-                    
+                    # Now, only select columns that are actually present
+                    final_columns = [col for col in batting_columns if col in df.columns]
+                    df = df[final_columns]
                     # Concatenate to the main DataFrame
                     batting_df = pd.concat([batting_df, df], ignore_index=True)
             
@@ -182,16 +170,16 @@ def process_excel_files():
                     for i, col in enumerate(df.columns):
                         if i < len(pitching_columns) - 2:
                             column_mapping[col] = pitching_columns[i]
-                    
                     # Rename columns
                     for old_col, new_col in column_mapping.items():
                         if old_col in df.columns:
                             df = df.rename(columns={old_col: new_col})
-                    
-                    # Ensure only expected columns are included
-                    available_columns = [col for col in pitching_columns if col in df.columns]
-                    df = df[available_columns]
-                    
+                    # Add Team and Round columns before any reordering
+                    df['Team'] = team_name
+                    df['Round'] = round_name
+                    # Now, only select columns that are actually present
+                    final_columns = [col for col in pitching_columns if col in df.columns]
+                    df = df[final_columns]
                     # Concatenate to the main DataFrame
                     pitching_df = pd.concat([pitching_df, df], ignore_index=True)
             
@@ -205,16 +193,16 @@ def process_excel_files():
                     for i, col in enumerate(df.columns):
                         if i < len(fielding_columns) - 2:
                             column_mapping[col] = fielding_columns[i]
-                    
                     # Rename columns
                     for old_col, new_col in column_mapping.items():
                         if old_col in df.columns:
                             df = df.rename(columns={old_col: new_col})
-                    
-                    # Ensure only expected columns are included
-                    available_columns = [col for col in fielding_columns if col in df.columns]
-                    df = df[available_columns]
-                    
+                    # Add Team and Round columns before any reordering
+                    df['Team'] = team_name
+                    df['Round'] = round_name
+                    # Now, only select columns that are actually present
+                    final_columns = [col for col in fielding_columns if col in df.columns]
+                    df = df[final_columns]
                     # Concatenate to the main DataFrame
                     fielding_df = pd.concat([fielding_df, df], ignore_index=True)
                 
