@@ -37,7 +37,7 @@ jobs:
       - name: Prepare site files
         run: |
           mkdir deploy
-          cp index.html main.js deploy/
+          cp output/index.html output/main.js deploy/
           cp output/Batting.csv output/Pitching.csv output/Fielding.csv deploy/
 
       - name: Configure Pages
