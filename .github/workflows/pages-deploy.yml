@@ -2,6 +2,12 @@ name: pages-deploy
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - "index.html"
+      - "main.js"
+      - "*.css"
+      - "input/*.xlsx"
 
 permissions:
   id-token: write
