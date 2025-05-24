@@ -18,3 +18,4 @@ find . -type d -name "__pycache__" -exec rm -rf {} +
 find . -type f -name "*.pyc" -delete
 
 echo "Reset completed successfully!"
+echo "You may now re-run 'python3 scripts/process.py' to regenerate output."

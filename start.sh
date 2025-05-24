@@ -31,7 +31,7 @@ if [ "$PYTHON_VERSION" != "3" ]; then
 fi
 
 # Run the Python script
-$PYTHON_CMD process.py
+$PYTHON_CMD scripts/process.py
 
 # Open a new terminal and activate virtual environment
 if [[ "$OSTYPE" == "darwin"* ]]; then
