@@ -77,15 +77,31 @@ $(document).ready(function () {
             // Build HTML table
             let html =
               filterHtml +
-              '<table id="csv-table" class="display table table-striped table-bordered" style="width:100%"><thead><tr>';
-            columns.forEach((col) => (html += `<th>${col}</th>`));
+              '<div class="table-responsive"><table id="csv-table" class="display table table-striped table-bordered" style="width:100%"><thead><tr>';
+            // Find the index of the 'Name' column
+            const nameColIdx = columns.findIndex(
+              (col) => col.trim().toLowerCase() === "name"
+            );
+            columns.forEach((col, idx) => {
+              if (idx === nameColIdx) {
+                html += `<th class="sticky-name-col">${col}</th>`;
+              } else {
+                html += `<th>${col}</th>`;
+              }
+            });
             html += "</tr></thead><tbody>";
             data.forEach((row) => {
               html += "<tr>";
-              columns.forEach((col) => (html += `<td>${row[col] || ""}</td>`));
+              columns.forEach((col, idx) => {
+                if (idx === nameColIdx) {
+                  html += `<td class="sticky-name-col">${row[col] || ""}</td>`;
+                } else {
+                  html += `<td>${row[col] || ""}</td>`;
+                }
+              });
               html += "</tr>";
             });
-            html += "</tbody></table>";
+            html += "</tbody></table></div>";
             // Export button container
             html +=
               '<div class="d-flex justify-content-center mt-3 mb-5"><button id="export-csv-btn" class="btn btn-outline-secondary">Export CSV</button></div>';

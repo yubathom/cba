@@ -59,3 +59,27 @@
   display: inline-block;
   margin-left: 0.5rem;
 }
+
+/* Sticky Name column */
+.sticky-name-col {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 3;
+  box-shadow: 2px 0 2px -1px rgba(0, 0, 0, 0.08);
+  /* fallback width, can be overridden */
+  min-width: 120px;
+  max-width: 300px;
+  white-space: nowrap;
+}
+
+/* On mobile, limit Name column width to 50vw */
+@media (max-width: 576px) {
+  .sticky-name-col {
+    max-width: 40vw;
+    min-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
