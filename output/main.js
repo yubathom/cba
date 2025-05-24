@@ -88,7 +88,7 @@ $(document).ready(function () {
             html += "</tbody></table>";
             // Export button container
             html +=
-              '<div class="d-flex justify-content-center mt-3"><button id="export-csv-btn" class="btn btn-outline-secondary">Export CSV</button></div>';
+              '<div class="d-flex justify-content-center mt-3 mb-5"><button id="export-csv-btn" class="btn btn-outline-secondary">Export CSV</button></div>';
             $("#table-container").html(html);
             // Activate DataTables
             const table = $("#csv-table").DataTable({
