@@ -86,6 +86,9 @@ $(document).ready(function () {
               html += "</tr>";
             });
             html += "</tbody></table>";
+            // Export button container
+            html +=
+              '<div class="d-flex justify-content-center mt-3"><button id="export-csv-btn" class="btn btn-outline-secondary">Export CSV</button></div>';
             $("#table-container").html(html);
             // Activate DataTables
             const table = $("#csv-table").DataTable({
@@ -95,6 +98,65 @@ $(document).ready(function () {
               dom: "tip",
               fixedHeader: true,
             });
+            // Export CSV logic
+            $("#export-csv-btn")
+              .off("click")
+              .on("click", function () {
+                // Get filtered data
+                const filteredData = table
+                  .rows({ search: "applied" })
+                  .data()
+                  .toArray();
+                // Convert to array of objects
+                const exportData = filteredData.map((rowArr) => {
+                  const obj = {};
+                  columns.forEach((col, idx) => {
+                    obj[col] = rowArr[idx];
+                  });
+                  return obj;
+                });
+                // Build dynamic filename based on filters
+                let base = file.replace(/\.csv$/, "");
+                let parts = [];
+                // Round filter
+                const roundChecked = $("input[name='filter-round']:checked")
+                  .map(function () {
+                    return $(this).val();
+                  })
+                  .get();
+                if (roundChecked.length > 0) {
+                  parts.push(
+                    "Round-" +
+                      roundChecked
+                        .map((v) => v.replace(/[^\w-]/g, ""))
+                        .join("-")
+                  );
+                }
+                // Team filter
+                const teamVal = $("#filter-team").val();
+                if (teamVal) {
+                  parts.push("Team-" + teamVal.replace(/[^\w-]/g, ""));
+                }
+                // Search filter
+                const searchVal = $("#custom-search").val();
+                if (searchVal) {
+                  parts.push("Search-" + searchVal.replace(/[^\w-]/g, ""));
+                }
+                let filename = base;
+                if (parts.length > 0) {
+                  filename += "_" + parts.join("_");
+                } else {
+                  filename += "_filtered";
+                }
+                filename += ".csv";
+                // Use PapaParse to unparse to CSV
+                const csv = Papa.unparse(exportData, { columns });
+                // Use FileSaver.js to save
+                const blob = new Blob([csv], {
+                  type: "text/csv;charset=utf-8;",
+                });
+                saveAs(blob, filename);
+              });
             // Filtering logic
             if (columns.includes("Round")) {
               $(document)
