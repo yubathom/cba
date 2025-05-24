@@ -47,4 +47,5 @@ echo "Installing required packages..."
 $PIP_CMD install pandas numpy openpyxl
 
 echo "Setup completed successfully!"
+echo "Run 'bash start.sh' to run and preview the processed data."
 

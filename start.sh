@@ -9,6 +9,7 @@ if [ -d "venv" ]; then
     fi
 else
     echo "Error: Python virtual environment (venv) not found!"
+    echo "Run 'bash setup.sh' to create the virtual environment."
     exit 1
 fi
 
@@ -31,6 +32,12 @@ fi
 
 # Run the Python script
 $PYTHON_CMD process.py
+
+# Check if npx is installed
+if ! command -v npx &> /dev/null; then
+    echo "Error: npx is not installed!"
+    exit 1
+fi
 
 # Open the output directory in the browser
 npx http-server ./output -o -p 8080
