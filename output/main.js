@@ -45,29 +45,33 @@ $(document).ready(function () {
             // Build filter dropdowns if columns exist
             let filterHtml = "";
             if (columns.includes("Round") || columns.includes("Team")) {
-              filterHtml += '<div class="row mb-3">';
+              filterHtml +=
+                '<div id="custom-filters" class="d-flex flex-column align-items-start mb-3">';
               if (columns.includes("Round")) {
                 const rounds = Array.from(
                   new Set(data.map((row) => row["Round"]).filter(Boolean))
                 ).sort();
                 filterHtml +=
-                  '<div class="col-auto"><label class="me-2">Round:</label><select id="filter-round" class="form-select form-select-sm"><option value="">All</option>';
+                  '<div class="mb-2"><label class="mb-1">Round:</label><div id="round-checkboxes">';
                 rounds.forEach((round) => {
-                  filterHtml += `<option value="${round}">${round}</option>`;
+                  filterHtml += `<div class=\"form-check form-check-inline me-3\"><input class=\"form-check-input\" type=\"checkbox\" name=\"filter-round\" value=\"${round}\" id=\"filter-round-${round}\"><label class=\"form-check-label\" for=\"filter-round-${round}\">${round}</label></div>`;
                 });
-                filterHtml += "</select></div>";
+                filterHtml += "</div></div>";
               }
               if (columns.includes("Team")) {
                 const teams = Array.from(
                   new Set(data.map((row) => row["Team"]).filter(Boolean))
                 ).sort();
                 filterHtml +=
-                  '<div class="col-auto"><label class="me-2">Team:</label><select id="filter-team" class="form-select form-select-sm"><option value="">All</option>';
+                  '<div class="mb-2"><label class="mb-1">Team:</label><select id="filter-team" class="form-select form-select-sm w-auto ms-2"><option value="">All</option>';
                 teams.forEach((team) => {
-                  filterHtml += `<option value="${team}">${team}</option>`;
+                  filterHtml += `<option value=\"${team}\">${team}</option>`;
                 });
                 filterHtml += "</select></div>";
               }
+              // Search input
+              filterHtml +=
+                '<div class="mb-2"><label class="mb-1">Search:</label><input type="search" id="custom-search" class="form-control form-control-sm w-auto ms-2" placeholder="Search"></div>';
               filterHtml += "</div>";
             }
             // Build HTML table
@@ -88,22 +92,35 @@ $(document).ready(function () {
               pageLength: -1,
               lengthMenu: [[-1], ["All"]],
               scrollX: true,
-              dom: "ftip",
+              dom: "tip",
               fixedHeader: true,
             });
             // Filtering logic
             if (columns.includes("Round")) {
-              $("#filter-round").on("change", function () {
-                const val = $(this).val();
-                table
-                  .column(columns.indexOf("Round"))
-                  .search(
-                    val ? "^" + $.escapeSelector(val) + "$" : "",
-                    true,
-                    false
-                  )
-                  .draw();
-              });
+              $(document)
+                .off("change", "input[name='filter-round']")
+                .on("change", "input[name='filter-round']", function () {
+                  const checked = $("input[name='filter-round']:checked")
+                    .map(function () {
+                      return $(this).val();
+                    })
+                    .get();
+                  if (checked.length === 0) {
+                    table
+                      .column(columns.indexOf("Round"))
+                      .search("", true, false)
+                      .draw();
+                  } else {
+                    // Build regex for OR search
+                    const regex = checked
+                      .map((val) => `^${$.escapeSelector(val)}$`)
+                      .join("|");
+                    table
+                      .column(columns.indexOf("Round"))
+                      .search(regex, true, false)
+                      .draw();
+                  }
+                });
             }
             if (columns.includes("Team")) {
               $("#filter-team").on("change", function () {
@@ -148,6 +165,10 @@ $(document).ready(function () {
                   $thead.find(".sticky-header-placeholder").remove();
                 }
               });
+            // Custom search input logic
+            $("#custom-search").on("input", function () {
+              table.search($(this).val()).draw();
+            });
           },
           error: function () {
             $("#table-container").html(

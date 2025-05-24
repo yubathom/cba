@@ -32,3 +32,30 @@
   height: 40px; /* Adjust to your header height if needed */
   background: transparent;
 }
+
+#custom-filters {
+  margin-bottom: 1.5rem;
+}
+#custom-filters > div {
+  margin-bottom: 0.75rem;
+}
+#custom-filters label {
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+#round-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 0.25rem;
+}
+#round-checkboxes .form-check {
+  margin-right: 1.5rem;
+  margin-bottom: 0;
+}
+#custom-filters select,
+#custom-filters input[type="search"] {
+  min-width: 160px;
+  display: inline-block;
+  margin-left: 0.5rem;
+}
