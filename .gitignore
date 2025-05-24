@@ -1,6 +1,10 @@
 raw_2025-04-14
 prompt.txt
 output/*
+!output/*.css
+!output/*.html
+!output/*.js
+!output/README.md
 !output/.gitkeep
 !main.js
 !index.html
