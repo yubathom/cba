@@ -54,7 +54,9 @@ $(document).ready(function () {
                 filterHtml +=
                   '<div class="mb-2"><label class="mb-1">Round:</label><div id="round-checkboxes">';
                 rounds.forEach((round) => {
-                  filterHtml += `<div class=\"form-check form-check-inline me-3\"><input class=\"form-check-input\" type=\"checkbox\" name=\"filter-round\" value=\"${round}\" id=\"filter-round-${round}\"><label class=\"form-check-label\" for=\"filter-round-${round}\">${round}</label></div>`;
+                  filterHtml += `<div class=\"form-check form-check-inline me-3\"><input class=\"form-check-input\" type=\"checkbox\" name=\"filter-round\" value=\"${round}\" id=\"filter-round-${round}\"${
+                    round === "TOTAL" ? " checked" : ""
+                  }><label class=\"form-check-label\" for=\"filter-round-${round}\">${round}</label></div>`;
                 });
                 filterHtml += "</div></div>";
               }
