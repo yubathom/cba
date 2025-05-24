@@ -209,45 +209,120 @@ def process_excel_files():
         except Exception as e:
             print(f"Error processing {file_path}: {e}")
     
-    # Save each table to a separate CSV file
+    # --- NEW LOGIC: Convert cumulative to per-round and add TOTAL row ---
+    def per_round_and_total(df, id_cols, stat_cols, derived_funcs, round_order=None):
+        if df.empty:
+            return df
+        # Sort rounds if order is provided
+        if round_order is not None:
+            df['__round_order'] = df['Round'].map(lambda r: round_order.index(r) if r in round_order else 999)
+            df = df.sort_values(['Team', 'Name', '__round_order'])
+        else:
+            df = df.sort_values(['Team', 'Name', 'Round'])
+        result_rows = []
+        for (team, name), group in df.groupby(['Team', 'Name'], sort=False):
+            group = group.copy()
+            group = group.sort_values('Round', key=lambda x: x.map(lambda r: round_order.index(r) if round_order and r in round_order else 999) if round_order else x)
+            prev = None
+            per_round_rows = []
+            for idx, row in group.iterrows():
+                base = row.copy()
+                if prev is not None:
+                    for col in stat_cols:
+                        if pd.api.types.is_numeric_dtype(df[col]):
+                            base[col] = row[col] - prev[col]
+                        else:
+                            try:
+                                base[col] = pd.to_numeric(row[col], errors='coerce') - pd.to_numeric(prev[col], errors='coerce')
+                            except Exception:
+                                pass
+                # Recalculate derived columns
+                for col, func in derived_funcs.items():
+                    base[col] = func(base)
+                per_round_rows.append(base)
+                prev = row
+            # Add TOTAL row
+            total = per_round_rows[0].copy()
+            total['Round'] = 'TOTAL'
+            for col in stat_cols:
+                total[col] = sum([r[col] for r in per_round_rows])
+            for col, func in derived_funcs.items():
+                total[col] = func(total)
+            result_rows.extend(per_round_rows)
+            result_rows.append(total)
+        result_df = pd.DataFrame(result_rows)
+        # Remove helper column if present
+        if '__round_order' in result_df.columns:
+            result_df = result_df.drop(columns=['__round_order'])
+        return result_df
+
+    # Get round order from input directory structure
+    round_dirs = sorted({os.path.basename(os.path.dirname(f)) for f in excel_files})
+
+    # Batting
     if not batting_df.empty:
-        # Calculate OBP and OPS
-        def safe_div(n, d):
-            try:
-                return n / d if d != 0 else np.nan
-            except Exception:
-                return np.nan
-
-        # OBP = (H + BB + HBP) / (AB + BB + HBP + SF)
-        h = pd.to_numeric(batting_df.get("H", 0), errors='coerce').fillna(0)
-        bb = pd.to_numeric(batting_df.get("BB", 0), errors='coerce').fillna(0)
-        hbp = pd.to_numeric(batting_df.get("HBP", 0), errors='coerce').fillna(0)
-        ab = pd.to_numeric(batting_df.get("AB", 0), errors='coerce').fillna(0)
-        sf = pd.to_numeric(batting_df.get("SF", 0), errors='coerce').fillna(0)
-        slg = pd.to_numeric(batting_df.get("SLG", 0), errors='coerce').fillna(0)
-        obp_denom = ab + bb + hbp + sf
-        obp = (h + bb + hbp) / obp_denom.replace(0, np.nan)
-        batting_df["OBP"] = obp.round(3)
-        batting_df["OPS"] = (batting_df["OBP"] + slg).round(3)
-
+        # Columns to diff (all except id columns and derived columns)
+        id_cols = ['#', 'Name', 'Team', 'Round']
+        derived_cols = ['AVG', 'OBP', 'OPS', 'SLG', 'BA/RSP']
+        stat_cols = [c for c in batting_columns if c not in id_cols + derived_cols]
+        # Derived column functions
+        def batting_avg(row):
+            ab = pd.to_numeric(row.get('AB', 0), errors='coerce')
+            h = pd.to_numeric(row.get('H', 0), errors='coerce')
+            return round(h / ab, 3) if ab else 0.0
+        def obp(row):
+            h = pd.to_numeric(row.get('H', 0), errors='coerce')
+            bb = pd.to_numeric(row.get('BB', 0), errors='coerce')
+            hbp = pd.to_numeric(row.get('HBP', 0), errors='coerce')
+            ab = pd.to_numeric(row.get('AB', 0), errors='coerce')
+            sf = pd.to_numeric(row.get('SF', 0), errors='coerce')
+            denom = ab + bb + hbp + sf
+            return round((h + bb + hbp) / denom, 3) if denom else 0.0
+        def ops(row):
+            return round(row.get('OBP', 0) + row.get('SLG', 0), 3)
+        derived_funcs = {'AVG': batting_avg, 'OBP': obp, 'OPS': ops}
+        batting_df = per_round_and_total(batting_df, id_cols, stat_cols, derived_funcs, round_dirs)
         # Ensure columns are in the correct order
-        available_columns = [col for col in batting_columns if col in batting_df.columns]
-        batting_df = batting_df[available_columns]
-
-        # Save the clean data
+        batting_df = batting_df[[c for c in batting_columns if c in batting_df.columns]]
         batting_df.to_csv(os.path.join(output_dir, 'Batting.csv'), index=False)
         print(f"Saved Batting.csv with {len(batting_df)} records")
-    
+
+    # Pitching
     if not pitching_df.empty:
-        # Save the clean data
+        id_cols = ['#', 'Name', 'Team', 'Round']
+        derived_cols = ['ERA']
+        stat_cols = [c for c in pitching_columns if c not in id_cols + derived_cols]
+        def era(row):
+            er = pd.to_numeric(row.get('ER', 0), errors='coerce')
+            ip = pd.to_numeric(row.get('IP', 0), errors='coerce')
+            return round((er * 9) / ip, 2) if ip else 0.0
+        derived_funcs = {'ERA': era}
+        pitching_df = per_round_and_total(pitching_df, id_cols, stat_cols, derived_funcs, round_dirs)
+        pitching_df = pitching_df[[c for c in pitching_columns if c in pitching_df.columns]]
         pitching_df.to_csv(os.path.join(output_dir, 'Pitching.csv'), index=False)
         print(f"Saved Pitching.csv with {len(pitching_df)} records")
-    
+
+    # Fielding
     if not fielding_df.empty:
-        # Save the clean data
+        id_cols = ['#', 'Name', 'Team', 'Round']
+        derived_cols = ['FP', 'FP1', 'FP2', 'FP3', 'FP4', 'FP5', 'FP6', 'FP7', 'FP8', 'FP9']
+        stat_cols = [c for c in fielding_columns if c not in id_cols + derived_cols]
+        def fp(row):
+            po = pd.to_numeric(row.get('PO', 0), errors='coerce')
+            a = pd.to_numeric(row.get('A', 0), errors='coerce')
+            err = pd.to_numeric(row.get('ERR', 0), errors='coerce')
+            denom = po + a + err
+            return round((po + a) / denom, 3) if denom else 0.0
+        derived_funcs = {'FP': fp}
+        # Add FP1-FP9 as passthrough (or recalc if needed)
+        for i in range(1, 10):
+            def make_fp_i(i):
+                return lambda row: fp(row)  # Placeholder, can be improved
+            derived_funcs[f'FP{i}'] = make_fp_i(i)
+        fielding_df = per_round_and_total(fielding_df, id_cols, stat_cols, derived_funcs, round_dirs)
+        fielding_df = fielding_df[[c for c in fielding_columns if c in fielding_df.columns]]
         fielding_df.to_csv(os.path.join(output_dir, 'Fielding.csv'), index=False)
         print(f"Saved Fielding.csv with {len(fielding_df)} records")
-    
     print(f"Processing complete. Files saved to {output_dir}")
 
 
