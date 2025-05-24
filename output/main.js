@@ -201,6 +201,8 @@ $(document).ready(function () {
                       .draw();
                   }
                 });
+              // Trigger change event on checked checkboxes to apply filter on load
+              $("input[name='filter-round']:checked").trigger("change");
             }
             if (columns.includes("Team")) {
               $("#filter-team").on("change", function () {
