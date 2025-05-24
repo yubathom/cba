@@ -4,3 +4,4 @@ output/*
 !output/.gitkeep
 !main.js
 !index.html
+output/*.csv
