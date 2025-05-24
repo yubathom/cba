@@ -6,14 +6,14 @@ A Python tool for processing baseball team statistics from Excel files to consol
 
 1. Clone this repository.
 2. (Optional) Create a virtual environment:
-   ```
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
+```
+python3 -m venv venv
+source venv/bin/activate
+```
 3. Install dependencies:
-   ```
-   pip install pandas numpy openpyxl
-   ```
+```
+pip install pandas numpy openpyxl
+```
 
 ## Processing Data
 
@@ -28,9 +28,9 @@ A Python tool for processing baseball team statistics from Excel files to consol
       ...
   ```
 - Run the processing script:
-  ```
-  python3 process.py
-  ```
+```
+python3 process.py
+```
 - Output CSVs will be generated in a timestamped `output/` directory.
 
 ## Local Development
