@@ -84,8 +84,8 @@ def process_excel_files():
     
     # Define expected column names for each table (excluding Team and Round which are added later)
     batting_columns = ["#", "Name", "G", "PA", "AB", "R", "H", "HR", "TB", "RBI", 
-                       "AVG", "BB", "SO", "HBP", "SB", "CS", "SCB", "SF", "SLG", "BA/RSP"]
-    # Add OBP and OPS after SLG and before BA/RSP
+                       "AVG", "BB", "SO", "HBP", "SB", "CS", "SCB", "SF", "SLG"]
+    # Add OBP and OPS after SLG
     batting_columns.insert(batting_columns.index("SLG") + 1, "OBP")
     batting_columns.insert(batting_columns.index("OBP") + 1, "OPS")
     
@@ -257,13 +257,24 @@ def process_excel_files():
         return result_df
 
     # Get round order from input directory structure
-    round_dirs = sorted({os.path.basename(os.path.dirname(f)) for f in excel_files})
+    def extract_round_number(r):
+        if r is None:
+            return float('inf')
+        if r.upper() == 'TOTAL':
+            return float('inf')
+        match = re.search(r'(\d+)', r)
+        return int(match.group(1)) if match else float('inf')
+
+    round_dirs = sorted(
+        {os.path.basename(os.path.dirname(f)) for f in excel_files},
+        key=lambda r: (extract_round_number(r), r.upper() != 'TOTAL')
+    )
 
     # Batting
     if not batting_df.empty:
         # Columns to diff (all except id columns and derived columns)
         id_cols = ['#', 'Name', 'Team', 'Round']
-        derived_cols = ['AVG', 'OBP', 'OPS', 'SLG', 'BA/RSP']
+        derived_cols = ['AVG', 'OBP', 'OPS', 'SLG']
         stat_cols = [c for c in batting_columns if c not in id_cols + derived_cols]
         # Derived column functions
         def batting_avg(row):

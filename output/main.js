@@ -50,7 +50,19 @@ $(document).ready(function () {
               if (columns.includes("Round")) {
                 const rounds = Array.from(
                   new Set(data.map((row) => row["Round"]).filter(Boolean))
-                ).sort();
+                ).sort((a, b) => {
+                  if (a === "TOTAL") return 1;
+                  if (b === "TOTAL") return -1;
+                  // Extract number from 'ROUND-1', 'ROUND-2', 'ROUND 4', etc.
+                  const numA = parseInt(a.replace(/[^\d]/g, ""), 10);
+                  const numB = parseInt(b.replace(/[^\d]/g, ""), 10);
+                  // If both are numbers, sort numerically
+                  if (!isNaN(numA) && !isNaN(numB)) {
+                    return numA - numB;
+                  }
+                  // Otherwise, sort alphabetically
+                  return a.localeCompare(b);
+                });
                 filterHtml +=
                   '<div class="mb-2"><label class="mb-1">Round:</label><div id="round-checkboxes">';
                 rounds.forEach((round) => {
