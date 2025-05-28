@@ -32,7 +32,7 @@ jobs:
           pip install pandas numpy openpyxl
 
       - name: Run data processing
-        run: python process.py
+        run: python scripts/process.py
 
       - name: Prepare site files
         run: |
