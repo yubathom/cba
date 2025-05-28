@@ -9,6 +9,7 @@ import pandas as pd
 from datetime import datetime
 import re
 import numpy as np
+import json
 
 
 def extract_team_name(filename):
@@ -337,5 +338,44 @@ def process_excel_files():
     print(f"Processing complete. Files saved to {output_dir}")
 
 
+def extract_legend_to_json():
+    legend_path = os.path.join('input', 'LEGENDA DAS ESTATÍSTICAS.xlsx')
+    output_path = os.path.join('output', 'legend.json')
+    if not os.path.exists(legend_path):
+        print(f"Legend file not found: {legend_path}")
+        return
+    df = pd.read_excel(legend_path)
+    # The columns alternate: code, description, code, description, ...
+    legend = {"batting": {}, "pitching": {}, "fielding": {}}
+    # Batting: columns 0 and 1
+    for i, row in df.iterrows():
+        if i == 0:
+            continue  # skip header
+        code = row.get('Unnamed: 0')
+        desc = row.get('ESTATÍSTICAS DE REBATEDOR')
+        if pd.notna(code) and pd.notna(desc):
+            legend["batting"][str(code).strip()] = str(desc).strip()
+    # Pitching: columns 2 and 3
+    for i, row in df.iterrows():
+        if i == 0:
+            continue
+        code = row.get('Unnamed: 2')
+        desc = row.get('ESTATÍSTICAS DE ARREMESSADOR')
+        if pd.notna(code) and pd.notna(desc):
+            legend["pitching"][str(code).strip()] = str(desc).strip()
+    # Fielding: columns 4 and 5
+    for i, row in df.iterrows():
+        if i == 0:
+            continue
+        code = row.get('Unnamed: 4')
+        desc = row.get('ESTATÍSTICA DE DEFENSORS')
+        if pd.notna(code) and pd.notna(desc):
+            legend["fielding"][str(code).strip()] = str(desc).strip()
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(legend, f, ensure_ascii=False, indent=2)
+    print(f"Saved legend.json with {sum(len(v) for v in legend.values())} entries")
+
+
 if __name__ == "__main__":
     process_excel_files()
+    extract_legend_to_json()
